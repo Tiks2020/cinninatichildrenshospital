@@ -27,6 +27,7 @@ export const useUneeq = (configOverride?: Partial<any>) => {
   const [avatarThinking, setAvatarThinking] = useState(false);
   const [lastResponse, setLastResponse] = useState<string>();
   const [uneeqInstance, setUneeqInstance] = useState<Uneeq | null>(null);
+  const [showAssessmentScale, setShowAssessmentScale] = useState(false);
 
   uneeqScriptStatus = useScript(scriptSrc, {
     id: 'uneeq',
@@ -93,12 +94,35 @@ export const useUneeq = (configOverride?: Partial<any>) => {
 
     const handleUneeqMessage = (event: any) => {
       const msg = event.detail;
+      console.log('Uneeq message type:', msg.uneeqMessageType, 'Full message:', msg);
       switch (msg.uneeqMessageType) {
         case 'SpeechEvent':
             // TODO: Handle SpeechEvent (Say to cursor to get get EventValue show button for example) 
             const eventValue = msg.speechEvent.param_value;
+            console.log('SpeechEvent received - Full message:', msg);
             console.log('SpeechEvent value: ', eventValue);
             setLastResponse(eventValue);
+            break;
+            
+        case 'PromptResult':
+            console.log('PromptResult received - Full message:', msg);
+            // Log the actual text content to see if XML is there
+            if (msg.promptResult && msg.promptResult.response && msg.promptResult.response.text) {
+              console.log('PromptResult text:', msg.promptResult.response.text);
+              // Check for XML in the response text
+              if (msg.promptResult.response.text.includes('<uneeq:displayAssesmentScale />')) {
+                console.log('✅ Found displayAssesmentScale XML in PromptResult response');
+                setShowAssessmentScale(true);
+              }
+            }
+            if (msg.promptResult && msg.promptResult.text) {
+              console.log('PromptResult direct text:', msg.promptResult.text);
+              // Check for XML in the direct text
+              if (msg.promptResult.text.includes('<uneeq:displayAssesmentScale />')) {
+                console.log('✅ Found displayAssesmentScale XML in PromptResult direct text');
+                setShowAssessmentScale(true);
+              }
+            }
             break;
 
         case 'AvatarStoppedSpeaking':
@@ -111,12 +135,28 @@ export const useUneeq = (configOverride?: Partial<any>) => {
           break;
           
         default:
+          // Check all possible locations for the XML in any message type
+          const possibleText =
+            (msg && msg.promptResult && msg.promptResult.response && msg.promptResult.response.text) ||
+            (msg && msg.promptResult && msg.promptResult.text) ||
+            (msg && msg.speechEvent && msg.speechEvent.param_value) ||
+            (msg && msg.param_value) ||
+            (msg && msg.text);
+            
+          if (typeof possibleText === 'string' && possibleText.includes('<uneeq:displayAssesmentScale />')) {
+            console.log('✅ Found displayAssesmentScale XML in message:', msg.uneeqMessageType);
+            setShowAssessmentScale(true);
+          }
           break;
       }
     };
 
     window.addEventListener('UneeqMessage', handleUneeqMessage as EventListener);
     console.log('UneeqMessage listener added.');
+    
+
+    
+
 
     return () => {
       window.removeEventListener('UneeqMessage', handleUneeqMessage as EventListener);
@@ -134,6 +174,18 @@ export const useUneeq = (configOverride?: Partial<any>) => {
       console.log('Calling uneeqInstance.startSession()');
       uneeqInstance.startSession();
       setAvatarLive(true);
+      
+      // Test if we can send a message to trigger the digital human
+      setTimeout(() => {
+        console.log('Testing: Sending welcome message to trigger digital human...');
+        if (uneeqInstance) {
+          uneeqInstance.chatPrompt("Hello, can you start the session?");
+          
+          // Debug: Check what properties are available on the uneeqInstance
+          console.log('Uneeq instance properties:', Object.keys(uneeqInstance));
+          console.log('Uneeq instance:', uneeqInstance);
+        }
+      }, 3000);
     }
   }, [uneeqInstance, readyToStart, avatarLive]);
 
@@ -169,6 +221,8 @@ export const useUneeq = (configOverride?: Partial<any>) => {
     avatarLive,
     avatarThinking,
     lastResponse,
+    showAssessmentScale,
+    setShowAssessmentScale,
     startSession, // Renamed from startDigitalHuman for clarity
     endSession,
     stopSpeaking,

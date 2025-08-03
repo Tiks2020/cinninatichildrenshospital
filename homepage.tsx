@@ -34,7 +34,7 @@ declare global {
 }
 
 export default function Component() {
-  const [showAssessmentScale, setShowAssessmentScale] = useState(true)
+  const [localShowAssessmentScale, setLocalShowAssessmentScale] = useState(true)
   const [volume, setVolume] = useState([75])
   const [pitch, setPitch] = useState([50])
   const [showClosedCaptions, setShowClosedCaptions] = useState(false)
@@ -58,6 +58,8 @@ export default function Component() {
     scriptStatus, 
     readyToStart, 
     avatarLive, 
+    showAssessmentScale,
+    setShowAssessmentScale,
     startSession, 
     endSession 
   } = useUneeq()
@@ -803,7 +805,7 @@ export default function Component() {
                   )}
 
                   {/* Assessment Overlay - Glassmorphism Style - Conditionally Rendered */}
-                  {showAssessmentScale && (
+                  {localShowAssessmentScale && (!isInConversation || showAssessmentScale) && (
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-500 z-10">
                       <div className="w-72 bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
                         <div className="p-4 border-b border-white/10">
@@ -985,8 +987,8 @@ export default function Component() {
                     Assessment Scale
                   </Label>
                   <Switch
-                    checked={showAssessmentScale}
-                    onCheckedChange={setShowAssessmentScale}
+                    checked={localShowAssessmentScale}
+                    onCheckedChange={setLocalShowAssessmentScale}
                     className="data-[state=checked]:bg-orange-500 data-[state=unchecked]:bg-gray-600"
                   />
                 </div>
