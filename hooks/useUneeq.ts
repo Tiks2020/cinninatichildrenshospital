@@ -49,7 +49,7 @@ export const useUneeq = (configOverride?: Partial<any>) => {
         // TODO: Move default options to config or env variables
         const defaultOptions = {
           connectionUrl: 'https://api.uneeq.io',
-          personaId: 'YOUR_ACTUAL_PERSONA_ID_HERE',
+          personaId: 'e672106f-b8d2-41eb-8988-588a3770aa78',
           displayCallToAction: false,
           renderContent: true,
           welcomePrompt: "Hello! I'm Sunny the Tiger, your therapeutic companion. How are you feeling today?",

@@ -20,7 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <title>DigitalBuddy</title>
-        <meta name="personaId" content="YOUR_ACTUAL_PERSONA_ID_HERE" />
+        <meta name="personaId" content="e672106f-b8d2-41eb-8988-588a3770aa78" />
       </head>
       <body className={inter.className}>{children}</body>
     </html>
