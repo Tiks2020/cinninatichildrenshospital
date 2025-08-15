@@ -60,17 +60,14 @@ export default function Component() {
     avatarLive, 
     showAssessmentScale,
     setShowAssessmentScale,
-<<<<<<< HEAD
     currentQuestionNumber,
-=======
->>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
     startSession, 
-    endSession 
+    endSession,
+    sendMessage
   } = useUneeq()
 
   const CORRECT_PIN = "1234"
 
-<<<<<<< HEAD
   // Function to get question text based on question number
   const getQuestionText = (questionNumber: number): string => {
     const questions = {
@@ -87,8 +84,36 @@ export default function Component() {
     return questions[questionNumber as keyof typeof questions] || questions[1];
   };
 
-=======
->>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
+  // Function to handle assessment scale button clicks
+  const handleAssessmentResponse = (score: number | "skip") => {
+    console.log(`Assessment response for question ${currentQuestionNumber}: ${score}`);
+    
+    // Convert score to speech text for the digital human
+    let speechText = "";
+    if (score === "skip") {
+      speechText = "I would like to skip this question";
+    } else {
+      const scoreLabels = {
+        0: "Not at all",
+        1: "Several days", 
+        2: "More than half the days",
+        3: "Nearly every day"
+      };
+      speechText = scoreLabels[score as keyof typeof scoreLabels] || "Not at all";
+    }
+    
+    // Send the response as speech input to the digital human
+    if (avatarLive) {
+      console.log(`Sending assessment response as speech: "${speechText}"`);
+      // Use the sendMessage function from useUneeq hook to send speech input
+      // This will make the digital human hear the selected response
+      sendMessage(speechText);
+    }
+    
+    // Hide the assessment scale after sending the response
+    setShowAssessmentScale(false);
+  };
+
   // Handle Uneeq session management
   useEffect(() => {
     if (isInConversation && readyToStart && !avatarLive) {
@@ -834,31 +859,25 @@ export default function Component() {
                         <div className="p-4 border-b border-white/10">
                           <div className="flex items-center gap-2 text-white/90">
                             <ClipboardList className="w-4 h-4 text-white/70" />
-<<<<<<< HEAD
                             <span className="text-sm font-medium">Question {currentQuestionNumber} of 9</span>
-=======
-                            <span className="text-sm font-medium">Question 3 of 9</span>
->>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
                           </div>
                         </div>
                         <div className="p-4 space-y-4">
                           <p className={`text-white/90 ${showLargeText ? "text-base" : "text-sm"} leading-relaxed`}>
-<<<<<<< HEAD
                             "{getQuestionText(currentQuestionNumber)}"
-=======
-                            "How have you been feeling about your seizures lately?"
->>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
                           </p>
 
                           <div className="space-y-2">
                             {[
-                              { value: 0, label: "Much better", color: "from-green-500/80 to-green-600/80" },
-                              { value: 1, label: "A little better", color: "from-yellow-500/80 to-yellow-600/80" },
-                              { value: 2, label: "About the same", color: "from-orange-500/80 to-orange-600/80" },
-                              { value: 3, label: "More worried", color: "from-red-500/80 to-red-600/80" },
+                              { value: 0, label: "Not at all", color: "from-green-500/80 to-green-600/80" },
+                              { value: 1, label: "Several days", color: "from-yellow-500/80 to-yellow-600/80" },
+                              { value: 2, label: "More than half the days", color: "from-orange-500/80 to-orange-600/80" },
+                              { value: 3, label: "Nearly every day", color: "from-red-500/80 to-red-600/80" },
+                              { value: "skip", label: "Skip", color: "from-gray-500/80 to-gray-600/80" },
                             ].map((option, i) => (
                               <button
                                 key={i}
+                                onClick={() => handleAssessmentResponse(option.value)}
                                 className={`w-full text-left p-2 bg-gradient-to-r ${option.color} backdrop-blur-sm border border-white/20 rounded-xl text-white ${showLargeText ? "text-base" : "text-sm"} transition-all hover:scale-[1.02] hover:border-white/30 hover:shadow-lg`}
                               >
                                 <div className="flex items-center gap-2">

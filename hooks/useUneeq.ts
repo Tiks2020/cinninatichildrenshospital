@@ -28,10 +28,7 @@ export const useUneeq = (configOverride?: Partial<any>) => {
   const [lastResponse, setLastResponse] = useState<string>();
   const [uneeqInstance, setUneeqInstance] = useState<Uneeq | null>(null);
   const [showAssessmentScale, setShowAssessmentScale] = useState(false);
-<<<<<<< HEAD
   const [currentQuestionNumber, setCurrentQuestionNumber] = useState<number>(1);
-=======
->>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
 
   uneeqScriptStatus = useScript(scriptSrc, {
     id: 'uneeq',
@@ -106,15 +103,12 @@ export const useUneeq = (configOverride?: Partial<any>) => {
             console.log('SpeechEvent received - Full message:', msg);
             console.log('SpeechEvent value: ', eventValue);
             setLastResponse(eventValue);
-<<<<<<< HEAD
             
             // Check if SpeechEvent contains custom_event XML to show assessment scale
             if (eventValue && typeof eventValue === 'string' && eventValue.includes('<uneeq:custom_event name="question_1" />')) {
               console.log('✅ Found custom_event XML in SpeechEvent - showing assessment scale');
               setShowAssessmentScale(true);
             }
-=======
->>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
             break;
             
         case 'PromptResult':
@@ -127,7 +121,6 @@ export const useUneeq = (configOverride?: Partial<any>) => {
                 console.log('✅ Found displayAssesmentScale XML in PromptResult response');
                 setShowAssessmentScale(true);
               }
-<<<<<<< HEAD
               // Check for custom_event XML in the response text
               if (msg.promptResult.response.text.includes('<uneeq:custom_event name="question_')) {
                 // Extract question number from XML like <uneeq:custom_event name="question_9" />
@@ -139,8 +132,6 @@ export const useUneeq = (configOverride?: Partial<any>) => {
                   setShowAssessmentScale(true);
                 }
               }
-=======
->>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
             }
             if (msg.promptResult && msg.promptResult.text) {
               console.log('PromptResult direct text:', msg.promptResult.text);
@@ -149,7 +140,6 @@ export const useUneeq = (configOverride?: Partial<any>) => {
                 console.log('✅ Found displayAssesmentScale XML in PromptResult direct text');
                 setShowAssessmentScale(true);
               }
-<<<<<<< HEAD
               // Check for custom_event XML in the direct text
               if (msg.promptResult.text.includes('<uneeq:custom_event name="question_')) {
                 // Extract question number from XML like <uneeq:custom_event name="question_9" />
@@ -161,8 +151,6 @@ export const useUneeq = (configOverride?: Partial<any>) => {
                   setShowAssessmentScale(true);
                 }
               }
-=======
->>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
             }
             break;
 
@@ -264,10 +252,7 @@ export const useUneeq = (configOverride?: Partial<any>) => {
     lastResponse,
     showAssessmentScale,
     setShowAssessmentScale,
-<<<<<<< HEAD
     currentQuestionNumber,
-=======
->>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
     startSession, // Renamed from startDigitalHuman for clarity
     endSession,
     stopSpeaking,
