@@ -873,7 +873,7 @@ export default function Component() {
                               { value: 1, label: "Several days", color: "from-yellow-500/80 to-yellow-600/80" },
                               { value: 2, label: "More than half the days", color: "from-orange-500/80 to-orange-600/80" },
                               { value: 3, label: "Nearly every day", color: "from-red-500/80 to-red-600/80" },
-                              { value: "skip", label: "Skip", color: "from-gray-500/80 to-gray-600/80" },
+                              { value: "-", label: "Skip", color: "from-gray-500/80 to-gray-600/80" },
                             ].map((option, i) => (
                               <button
                                 key={i}
@@ -882,7 +882,7 @@ export default function Component() {
                               >
                                 <div className="flex items-center gap-2">
                                   <div className="w-5 h-5 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-xs font-bold border border-white/20">
-                                    {option.value}
+                                    {option.value === "skip" ? "-" : option.value}
                                   </div>
                                   <span>{option.label}</span>
                                 </div>
