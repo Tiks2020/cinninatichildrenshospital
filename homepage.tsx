@@ -60,13 +60,17 @@ export default function Component() {
     avatarLive, 
     showAssessmentScale,
     setShowAssessmentScale,
+<<<<<<< HEAD
     currentQuestionNumber,
+=======
+>>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
     startSession, 
     endSession 
   } = useUneeq()
 
   const CORRECT_PIN = "1234"
 
+<<<<<<< HEAD
   // Function to get question text based on question number
   const getQuestionText = (questionNumber: number): string => {
     const questions = {
@@ -83,6 +87,8 @@ export default function Component() {
     return questions[questionNumber as keyof typeof questions] || questions[1];
   };
 
+=======
+>>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
   // Handle Uneeq session management
   useEffect(() => {
     if (isInConversation && readyToStart && !avatarLive) {
@@ -828,12 +834,20 @@ export default function Component() {
                         <div className="p-4 border-b border-white/10">
                           <div className="flex items-center gap-2 text-white/90">
                             <ClipboardList className="w-4 h-4 text-white/70" />
+<<<<<<< HEAD
                             <span className="text-sm font-medium">Question {currentQuestionNumber} of 9</span>
+=======
+                            <span className="text-sm font-medium">Question 3 of 9</span>
+>>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
                           </div>
                         </div>
                         <div className="p-4 space-y-4">
                           <p className={`text-white/90 ${showLargeText ? "text-base" : "text-sm"} leading-relaxed`}>
+<<<<<<< HEAD
                             "{getQuestionText(currentQuestionNumber)}"
+=======
+                            "How have you been feeling about your seizures lately?"
+>>>>>>> 7221d5d2cfc95cfb1be7c711eb10c8adc210aaaa
                           </p>
 
                           <div className="space-y-2">
