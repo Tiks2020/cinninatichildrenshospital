@@ -47,6 +47,16 @@ export default function Component() {
   const [endPin, setEndPin] = useState(["", "", "", ""])
   const [pinError, setPinError] = useState("")
   const [endPinError, setEndPinError] = useState("")
+  const [patientId, setPatientId] = useState("")
+  const [assessmentResponses, setAssessmentResponses] = useState<Array<{
+    questionNumber: number;
+    question: string;
+    score: number | "skip";
+    scoreText: string;
+    timestamp: string;
+    isCritical: boolean;
+  }>>([])
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null)
   const longPressTimer = useRef<NodeJS.Timeout | null>(null)
   const [isModalClosing, setIsModalClosing] = useState(false)
   const [isSessionStarting, setIsSessionStarting] = useState(false)
@@ -90,8 +100,10 @@ export default function Component() {
     
     // Convert score to speech text for the digital human
     let speechText = "";
+    let scoreText = "";
     if (score === "skip") {
       speechText = "I would like to skip this question";
+      scoreText = "Skip";
     } else {
       const scoreLabels = {
         0: "Not at all",
@@ -100,7 +112,20 @@ export default function Component() {
         3: "Nearly every day"
       };
       speechText = scoreLabels[score as keyof typeof scoreLabels] || "Not at all";
+      scoreText = scoreLabels[score as keyof typeof scoreLabels] || "Not at all";
     }
+    
+    // Store the assessment response
+    const newResponse = {
+      questionNumber: currentQuestionNumber,
+      question: getQuestionText(currentQuestionNumber),
+      score: score,
+      scoreText: scoreText,
+      timestamp: new Date().toLocaleTimeString(),
+      isCritical: score === 3 // Mark as critical if score is 3 (Nearly every day)
+    };
+    
+    setAssessmentResponses(prev => [...prev, newResponse]);
     
     // Send the response as speech input to the digital human
     if (avatarLive) {
@@ -137,91 +162,27 @@ export default function Component() {
     }
   }, [avatarLive, showLoadingScreen]);
 
-  // Mock session analytics data with critical responses
+  // Real session analytics data based on actual assessment responses
   const sessionAnalytics = {
     sessionId: "SES-2024-001",
-    patientId: "PAT-12345",
-    startTime: "2024-01-15 14:30:00",
-    endTime: "2024-01-15 15:15:00",
-    duration: "45 minutes",
+    patientId: patientId || "PAT-12345",
+    startTime: sessionStartTime ? sessionStartTime.toLocaleString() : "",
+    endTime: "", // Will be set when session ends
+    duration: sessionStartTime ? `${Math.floor((Date.now() - sessionStartTime.getTime()) / 60000)} minutes` : "",
     character: "Sunny the Tiger",
-    hasCriticalResponses: true,
-    criticalCount: 2,
-    responses: [
-      {
-        question: "How are you feeling today?",
-        options: ["Great", "Good", "Okay", "Not so good"],
-        selected: 1,
-        selectedText: "Good",
-        timestamp: "14:32:15",
-        isCritical: false,
-      },
-      {
-        question: "How have you been feeling about your seizures lately?",
-        options: ["Much better", "A little better", "About the same", "More worried"],
-        selected: 3,
-        selectedText: "More worried",
-        timestamp: "14:35:22",
-        isCritical: true,
-      },
-      {
-        question: "How well did you sleep last night?",
-        options: ["Very well", "Pretty well", "Not great", "Poorly"],
-        selected: 1,
-        selectedText: "Pretty well",
-        timestamp: "14:38:45",
-        isCritical: false,
-      },
-      {
-        question: "How is your energy level today?",
-        options: ["High energy", "Good energy", "Low energy", "Very tired"],
-        selected: 2,
-        selectedText: "Low energy",
-        timestamp: "14:41:12",
-        isCritical: false,
-      },
-      {
-        question: "How comfortable do you feel talking about your feelings?",
-        options: ["Very comfortable", "Comfortable", "A bit nervous", "Very nervous"],
-        selected: 1,
-        selectedText: "Comfortable",
-        timestamp: "14:44:33",
-        isCritical: false,
-      },
-      {
-        question: "How supported do you feel by your family?",
-        options: ["Very supported", "Supported", "Somewhat supported", "Not supported"],
-        selected: 0,
-        selectedText: "Very supported",
-        timestamp: "14:47:18",
-        isCritical: false,
-      },
-      {
-        question: "How confident do you feel about managing your condition?",
-        options: ["Very confident", "Confident", "Somewhat confident", "Not confident"],
-        selected: 2,
-        selectedText: "Somewhat confident",
-        timestamp: "14:50:05",
-        isCritical: false,
-      },
-      {
-        question: "How would you rate your mood this week?",
-        options: ["Excellent", "Good", "Fair", "Poor"],
-        selected: 3,
-        selectedText: "Poor",
-        timestamp: "14:52:41",
-        isCritical: true,
-      },
-      {
-        question: "How hopeful do you feel about the future?",
-        options: ["Very hopeful", "Hopeful", "Somewhat hopeful", "Not hopeful"],
-        selected: 1,
-        selectedText: "Hopeful",
-        timestamp: "14:55:28",
-        isCritical: false,
-      },
-    ],
+    hasCriticalResponses: assessmentResponses.some(r => r.isCritical),
+    criticalCount: assessmentResponses.filter(r => r.isCritical).length,
+    responses: assessmentResponses.map(response => ({
+      question: response.question,
+      options: ["Not at all", "Several days", "More than half the days", "Nearly every day", "Skip"],
+      selected: response.score === "skip" ? 4 : response.score,
+      selectedText: response.scoreText,
+      timestamp: response.timestamp,
+      isCritical: response.isCritical,
+    })),
   }
+
+  const criticalResponses = sessionAnalytics.responses.filter((r) => r.isCritical)
 
   const handleStartConversation = () => {
     setIsModalOpening(true)
@@ -231,6 +192,8 @@ export default function Component() {
       setIsModalOpening(false)
     }, 400)
   }
+
+
 
   const handlePinChange = (index: number, value: string) => {
     if (value.length > 1) return // Only allow single digits
@@ -285,6 +248,10 @@ export default function Component() {
   const handlePinSubmit = () => {
     const enteredPin = pin.join("")
     if (enteredPin === CORRECT_PIN) {
+      // Reset assessment responses for new session
+      setAssessmentResponses([])
+      setSessionStartTime(new Date())
+      
       setIsSessionStarting(true)
 
       // Start the transition animation
@@ -402,8 +369,6 @@ export default function Component() {
     return colors[value] || colors[2]
   }
 
-  const criticalResponses = sessionAnalytics.responses.filter((r) => r.isCritical)
-
   const handleDownloadReport = () => {
     // Implement download report functionality here
   }
@@ -497,6 +462,19 @@ export default function Component() {
             <CardContent className="space-y-4">
               <div>
                 <Label className={`${showLargeText ? "text-base" : "text-sm"} text-gray-300 mb-2 block`}>
+                  Patient ID
+                </Label>
+                <Input
+                  type="text"
+                  value={patientId}
+                  onChange={(e) => setPatientId(e.target.value)}
+                  placeholder="Enter patient ID"
+                  className={`w-full text-center text-lg font-medium bg-gray-700 border-gray-600 text-white transition-all duration-300 ${showLargeText ? "text-xl" : "text-lg"} ${isSessionStarting ? "border-green-500/50 bg-green-500/10" : ""}`}
+                  disabled={isSessionStarting}
+                />
+              </div>
+              <div>
+                <Label className={`${showLargeText ? "text-base" : "text-sm"} text-gray-300 mb-2 block`}>
                   Clinician PIN
                 </Label>
                 <div className="flex gap-3 justify-center mb-2">
@@ -533,7 +511,7 @@ export default function Component() {
                       ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
                       : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
                   } text-white`}
-                  disabled={pin.some((digit) => digit === "") || isSessionStarting}
+                  disabled={pin.some((digit) => digit === "") || patientId.trim() === "" || isSessionStarting}
                 >
                   {isSessionStarting ? (
                     <span className="flex items-center gap-2">
@@ -690,8 +668,8 @@ export default function Component() {
               {/* Session Summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-gray-700/50 rounded-lg p-3">
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Session ID</p>
-                  <p className="text-sm font-medium text-white">{sessionAnalytics.sessionId}</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide">Patient ID</p>
+                  <p className="text-sm font-medium text-white">{sessionAnalytics.patientId}</p>
                 </div>
                 <div className="bg-gray-700/50 rounded-lg p-3">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Duration</p>
@@ -703,42 +681,45 @@ export default function Component() {
                 </div>
                 <div className="bg-gray-700/50 rounded-lg p-3">
                   <p className="text-xs text-gray-400 uppercase tracking-wide">Questions</p>
-                  <p className="text-sm font-medium text-white">{sessionAnalytics.responses.length}/9</p>
+                  <p className="text-sm font-medium text-white">{assessmentResponses.length}/9</p>
                 </div>
               </div>
 
               {/* Assessment Responses */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white mb-4">Assessment Responses</h3>
-                {sessionAnalytics.responses.map((response, index) => (
+                {assessmentResponses.length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">No assessment responses yet. Complete the assessment questions to see responses here.</p>
+                ) : (
+                  assessmentResponses.map((response, index) => (
                   <div key={index} className="bg-gray-700/30 rounded-lg p-4 border border-gray-600/50">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <h4 className="text-sm font-medium text-white mb-2">
-                          Question {index + 1}: {response.question}
+                          Question {response.questionNumber}: {response.question}
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {response.options.map((option, optionIndex) => (
+                          {["Not at all", "Several days", "More than half the days", "Nearly every day", "Skip"].map((option, optionIndex) => (
                             <div
                               key={optionIndex}
                               className={`p-2 rounded-lg border transition-all ${
-                                optionIndex === response.selected
-                                  ? `bg-gradient-to-r ${getResponseColor(response.selected, response.isCritical)} border-white/20 text-white`
+                                optionIndex === (response.score === "skip" ? 4 : response.score)
+                                  ? `bg-gradient-to-r ${getResponseColor(response.score === "skip" ? 4 : response.score, response.isCritical)} border-white/20 text-white`
                                   : "bg-gray-800/50 border-gray-600/30 text-gray-400"
                               }`}
                             >
                               <div className="flex items-center gap-2">
                                 <div
                                   className={`w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold ${
-                                    optionIndex === response.selected
+                                    optionIndex === (response.score === "skip" ? 4 : response.score)
                                       ? "bg-white/30 text-white"
                                       : "bg-gray-600/50 text-gray-500"
                                   }`}
                                 >
-                                  {optionIndex}
+                                  {optionIndex === 4 ? "-" : optionIndex}
                                 </div>
                                 <span className="text-sm">{option}</span>
-                                {optionIndex === response.selected && (
+                                {optionIndex === (response.score === "skip" ? 4 : response.score) && (
                                   <span className="ml-auto text-xs font-medium">✓ Selected</span>
                                 )}
                               </div>
@@ -752,7 +733,8 @@ export default function Component() {
                       </div>
                     </div>
                   </div>
-                ))}
+                ))
+                )}
               </div>
 
               {/* Summary Insights */}
@@ -761,15 +743,35 @@ export default function Component() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <p className="text-gray-400">Overall Mood</p>
-                    <p className="text-white font-medium">Positive</p>
+                    <p className="text-white font-medium">
+                      {assessmentResponses.length === 0 ? "No responses yet" :
+                       assessmentResponses.filter(r => r.score !== "skip").length === 0 ? "No scored responses" :
+                       (() => {
+                         const avgScore = assessmentResponses
+                           .filter(r => r.score !== "skip")
+                           .reduce((sum, r) => sum + (r.score as number), 0) / 
+                           assessmentResponses.filter(r => r.score !== "skip").length;
+                         if (avgScore <= 1) return "Positive";
+                         if (avgScore <= 2) return "Moderate";
+                         return "Concerning";
+                       })()}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-400">Engagement Level</p>
-                    <p className="text-white font-medium">High</p>
+                    <p className="text-white font-medium">
+                      {assessmentResponses.length === 0 ? "No responses yet" :
+                       assessmentResponses.length >= 6 ? "High" :
+                       assessmentResponses.length >= 3 ? "Moderate" : "Low"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-400">Areas of Concern</p>
-                    <p className="text-white font-medium">Energy levels</p>
+                    <p className="text-white font-medium">
+                      {assessmentResponses.filter(r => r.isCritical).length === 0 ? "None detected" :
+                       assessmentResponses.filter(r => r.isCritical).length === 1 ? "1 critical response" :
+                       `${assessmentResponses.filter(r => r.isCritical).length} critical responses`}
+                    </p>
                   </div>
                 </div>
               </div>
