@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { useUneeq } from "@/hooks/useUneeq"
 import UneeqScript from "@/app/components/UneeqScript"
 import { Button } from "@/components/ui/button"
@@ -34,7 +34,7 @@ declare global {
 }
 
 export default function Component() {
-  const [localShowAssessmentScale, setLocalShowAssessmentScale] = useState(true)
+  const [localShowAssessmentScale, setLocalShowAssessmentScale] = useState(false)
   const [volume, setVolume] = useState([75])
   const [pitch, setPitch] = useState([50])
   const [showClosedCaptions, setShowClosedCaptions] = useState(false)
@@ -163,9 +163,9 @@ export default function Component() {
   }, [avatarLive, showLoadingScreen]);
 
   // Real session analytics data based on actual assessment responses
-  const sessionAnalytics = {
+  const sessionAnalytics = useMemo(() => ({
     sessionId: "SES-2024-001",
-    patientId: patientId || "PAT-12345",
+    patientId: patientId || "No Patient ID",
     startTime: sessionStartTime ? sessionStartTime.toLocaleString() : "",
     endTime: "", // Will be set when session ends
     duration: sessionStartTime ? `${Math.floor((Date.now() - sessionStartTime.getTime()) / 60000)} minutes` : "",
@@ -180,7 +180,7 @@ export default function Component() {
       timestamp: response.timestamp,
       isCritical: response.isCritical,
     })),
-  }
+  }), [patientId, sessionStartTime, assessmentResponses])
 
   const criticalResponses = sessionAnalytics.responses.filter((r) => r.isCritical)
 
@@ -347,11 +347,23 @@ export default function Component() {
     setShowEndSessionDialog(true)
   }
 
+  // Function to reset accessibility settings to default (off)
+  const resetAccessibilitySettings = () => {
+    setLocalShowAssessmentScale(false)
+    setShowClosedCaptions(false)
+    setShowLargeText(false)
+    setPatientId("") // Clear patient ID
+    console.log('🔄 Accessibility settings and patient ID reset to default')
+  }
+
   const handleCloseAnalytics = () => {
     setIsModalClosing(true)
     setTimeout(() => {
       setShowAnalytics(false)
       setIsModalClosing(false)
+      
+      // Reset accessibility settings and patient ID after analytics are closed
+      resetAccessibilitySettings()
     }, 400)
   }
 
@@ -827,12 +839,7 @@ export default function Component() {
                                    scriptStatus === 'ready' ? 'Connecting to digital human...' :
                                    'Preparing therapeutic environment...'}
                                  </p>
-                                 {/* Debug info */}
-                                 <div className="text-xs text-gray-400 mt-2">
-                                   Debug: isInConversation={isInConversation.toString()},
-                                   avatarLive={avatarLive.toString()},
-                                   scriptStatus={scriptStatus}
-                                 </div>
+
                                </div>
                         
                         {/* Progress dots */}
